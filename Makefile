@@ -1,12 +1,13 @@
 
 
 install:
-
-run:
-
+	uv sync
+run: install
+	uv run python -m src
 debug:
 
 clean:
+	
 
 lint:
 	flake8 .
