@@ -1,6 +1,8 @@
 from llm_sdk import Small_LLM_Model
 import src.parser as parser
-from src.models import FunctionDefinition, TestPrompt
+from src.models import FunctionFormat, PromptFormat
+from src.generation.constrained_decoding import JsonConstrainedDecoder
+import json
 
 
 def main() -> None:
@@ -9,18 +11,16 @@ def main() -> None:
 
     print("Reading the files")
 
+    prompts = parser.load_and_validate_json(args.input, PromptFormat)
     functions = parser.load_and_validate_json(
-        args.functions_definition, FunctionDefinition
+        args.functions_definition, FunctionFormat
     )
-    prompts = parser.load_and_validate_json(args.input, TestPrompt)
-
-    # TODO: Ajouter ici la logique pour:
-    # 1. Lire et valider les fichiers JSON d'entrée - OK
+    print("Initializing the AI model Qwen/Qwen3-0.6B...")
     ai_model = Small_LLM_Model()
-    ai_model.encode
-    # ai_model.
-    # 2. Initialiser le modèle Small_LLM_Model du llm_sdk - EN COURS
-    # 3. Lancer la boucle de génération / constrained decoding
+    print(f"AI Model loaded with success on the {ai_model._device}!")
+
+    decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
+    # 3. Lancer la boucle de génération / constrained decoding - EN COURS
     # 4. Sauvegarder les résultats
 
 

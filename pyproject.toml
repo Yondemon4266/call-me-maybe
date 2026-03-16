@@ -22,6 +22,9 @@ exclude = [
     "^llm_sdk/",
 ]
 
+[tool.uv]
+extra-index-url = ["https://download.pytorch.org/whl/cpu"]
+
 [tool.uv.workspace]
 members = [
     "llm_sdk",

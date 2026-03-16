@@ -5,10 +5,18 @@ from pydantic import (
     field_validator,
 )
 
+# from typing import Any
+
 from pathlib import Path
 
 
-class TestPrompt(BaseModel):
+# class OutputFormat(BaseModel):
+#     prompt: str
+#     name: str
+#     parameters: dict[str, Any]
+
+
+class PromptFormat(BaseModel):
     prompt: str
 
 
@@ -16,7 +24,7 @@ class TypeInfo(BaseModel):
     type: str
 
 
-class FunctionDefinition(BaseModel):
+class FunctionFormat(BaseModel):
     name: str
     description: str
     parameters: dict[str, TypeInfo]
