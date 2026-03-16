@@ -1,25 +1,28 @@
 
+.PHONY: install run debug clean lint lint-strict
 
 install:
 	uv sync
+
 run: install
 	uv run python -m src
-debug:
+
+debug: install
+	uv run python -m pdb -m src
 
 clean:
-	
+	@echo "Nettoyage des fichiers cache..."
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf .mypy_cache
 
 lint:
-	flake8 .
-	mypy . --warn-return-any \
-	--warn-unused-ignores \
-	--ignore-missing-imports \
-	--disallow-untyped-defs \
-	--check-untyped-defs
+	uv run flake8 .
+	uv run mypy . --warn-return-any \
+		--warn-unused-ignores \
+		--ignore-missing-imports \
+		--disallow-untyped-defs \
+		--check-untyped-defs
 
 lint-strict:
-	flake8 .
-	mypy . --strict
-fclean: clean
-
-.PHONY=install run debug clean fclean
+	uv run flake8 .
+	uv run mypy . --strict
