@@ -22,6 +22,7 @@ def main() -> None:
     decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
     # 3. Lancer la boucle de génération / constrained decoding - EN COURS
     # 4. Sauvegarder les résultats
+    decoder.generate_json_in_output_format(prompts[0])
 
 
 if __name__ == "__main__":
