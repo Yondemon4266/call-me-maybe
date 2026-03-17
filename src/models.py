@@ -4,16 +4,9 @@ from pydantic import (
     model_validator,
     field_validator,
 )
-
-# from typing import Any
+from typing import Literal
 
 from pathlib import Path
-
-
-# class OutputFormat(BaseModel):
-#     prompt: str
-#     name: str
-#     parameters: dict[str, Any]
 
 
 class PromptFormat(BaseModel):
@@ -21,7 +14,9 @@ class PromptFormat(BaseModel):
 
 
 class TypeInfo(BaseModel):
-    type: str
+    type: Literal[
+        "string", "number", "boolean", "integer", "array", "object", "null"
+    ]
 
 
 class FunctionFormat(BaseModel):

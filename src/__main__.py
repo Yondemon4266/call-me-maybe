@@ -1,7 +1,7 @@
 from llm_sdk import Small_LLM_Model
 import src.parser as parser
 from src.models import FunctionFormat, PromptFormat
-from src.generation.constrained_decoding import JsonConstrainedDecoder
+from src.generation.decoder import JsonConstrainedDecoder
 import json
 
 
@@ -22,7 +22,8 @@ def main() -> None:
     decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
     # 3. Lancer la boucle de génération / constrained decoding - EN COURS
     # 4. Sauvegarder les résultats
-    decoder.generate_json_in_output_format(prompts[0])
+    for prompt in prompts:
+        decoder.generate_json_in_output_format(prompt)
 
 
 if __name__ == "__main__":
