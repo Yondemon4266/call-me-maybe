@@ -1,7 +1,8 @@
-from collections import deque
+import json
 
 from llm_sdk import Small_LLM_Model
-from src.generation.fsm import DecodingStep
+from src.generation.decoding_steps import DecodingStep
+from src.generation.state_machine import JsonStateMachine
 from src.generation.trie import FunctionNameTrie
 from src.models import FunctionFormat, PromptFormat
 
@@ -24,42 +25,15 @@ class JsonConstrainedDecoder:
             f"{self.functions_text}"
         )
         self.vocabulary_file = model.get_path_to_vocab_file()
-
-        self.static_steps_text = {
-            DecodingStep.STEP_START_TO_PROMPT: '{\n  "prompt": "',
-            DecodingStep.STEP_TO_NAME: '",\n  "name": "',
-            DecodingStep.STEP_TO_PARAMS: '",\n  "parameters": {',
-            DecodingStep.STEP_END: "\n}",
-        }
-
-        self.encoded_static_steps: dict[DecodingStep, list[int]] = {
-            step: self.model.encode(text).tolist()[0]
-            for step, text in self.static_steps_text.items()
-        }
         self.fn_name_trie = FunctionNameTrie(self.model, self.functions)
-        self.transitions = {
-            DecodingStep.STEP_START_TO_PROMPT: DecodingStep.STEP_PROMPT_VALUE,
-            DecodingStep.STEP_PROMPT_VALUE: DecodingStep.STEP_TO_NAME,
-            DecodingStep.STEP_TO_NAME: DecodingStep.AI_NAME_VALUE,
-            DecodingStep.AI_NAME_VALUE: DecodingStep.STEP_TO_PARAMS,
-            DecodingStep.STEP_TO_PARAMS: DecodingStep.AI_PARAMS_KEYS,
-            DecodingStep.AI_PARAMS_KEYS: DecodingStep.AI_PARAMS_VALS,
-            DecodingStep.AI_PARAMS_VALS: DecodingStep.STEP_END,
-        }
 
     def _init_functions_text(self) -> str:
-        # On initialise une vraie chaîne de caractères vide (ou une liste qu'on .join() à la fin)
         functions_text = ""
-
         for func in self.functions:
             functions_text += f"- Function: {func.name}\n"
             functions_text += f"  Description: {func.description}\n"
-
-            # On utilise json.dumps pour que l'IA lise un format clair et familier
             functions_text += f"  Parameters: {func.parameters}\n"
-
             functions_text += f"  Returns: {func.returns}\n\n"
-
         return functions_text
 
     def _mask_logits(
@@ -80,90 +54,51 @@ class JsonConstrainedDecoder:
         )
         input_ids: list[int] = self.model.encode(dynamic_context).tolist()[0]
 
-        steps_map = self.encoded_static_steps.copy()
-        steps_map[DecodingStep.STEP_PROMPT_VALUE] = self.model.encode(
-            prompt.prompt
-        ).tolist()[0]
-
-        current_step = DecodingStep.STEP_START_TO_PROMPT
-        current_step_queue = deque(steps_map[current_step])
-        current_trie_node = self.fn_name_trie.root
         max_tokens = 200
         generated_tokens = []
-        chosen_function = None
 
-        current_params_queue = []
-        current_param_type = None
-        is_first_param = True
+        print(f"\n--- [PURISTE] Traitement de : {prompt.prompt} ---")
+
+        # 1. On instancie notre arbitre pour cette génération précise
+        fsm = JsonStateMachine(
+            model=self.model,
+            prompt_text=prompt.prompt,
+            functions=self.functions,
+            fn_name_trie=self.fn_name_trie,
+        )
+
         for _ in range(max_tokens):
+
+            # --- LE RACCOURCI : FAST-FORWARDING ---
+            if fsm.current_step == DecodingStep.STEP_PROMPT_VALUE:
+                prompt_tokens = fsm.fast_forward_prompt()
+                input_ids.extend(prompt_tokens)
+                generated_tokens.extend(prompt_tokens)
+                print(prompt.prompt, end="", flush=True)
+                continue
+            # --------------------------------------
+
             logits = self.model.get_logits_from_input_ids(input_ids)
-            allowed_token_ids = []
 
-            match current_step:
-                case (
-                    DecodingStep.STEP_START_TO_PROMPT
-                    | DecodingStep.STEP_PROMPT_VALUE
-                    | DecodingStep.STEP_TO_NAME
-                    | DecodingStep.STEP_TO_PARAMS
-                    | DecodingStep.STEP_END
-                ):
-                    allowed_token_ids = [current_step_queue[0]]
-                case DecodingStep.AI_NAME_VALUE:
-                    allowed_token_ids = self.fn_name_trie.get_allowed_tokens(
-                        current_trie_node
-                    )
-                case DecodingStep.AI_PARAMS_KEYS:
-                    break
-                case DecodingStep.AI_PARAMS_VALS:
-                    pass
+            # 2. On demande les règles à l'arbitre
+            allowed_token_ids = fsm.get_allowed_tokens()
 
+            # Sécurité temporaire : on arrête le code ici tant qu'on n'a pas codé la logique des clés !
+            if fsm.current_step == DecodingStep.AI_PARAMS_KEYS:
+                break
+
+            # 3. Masquage et sélection
             self._mask_logits(logits, allowed_token_ids)
-
             next_token_id = logits.index(max(logits))
+
             input_ids.append(next_token_id)
             generated_tokens.append(next_token_id)
 
             print(self.model.decode([next_token_id]), end="", flush=True)
 
-            match current_step:
-                case (
-                    DecodingStep.STEP_START_TO_PROMPT
-                    | DecodingStep.STEP_PROMPT_VALUE
-                    | DecodingStep.STEP_TO_NAME
-                    | DecodingStep.STEP_TO_PARAMS
-                ):
-                    current_step_queue.popleft()
-                    if not current_step_queue:
-                        current_step = self.transitions[current_step]
-                        if current_step in steps_map:
-                            current_step_queue = deque(steps_map[current_step])
-                case DecodingStep.STEP_END:
-                    current_step_queue.popleft()
-                    if not current_step_queue:
-                        break
-                case DecodingStep.AI_NAME_VALUE:
-                    current_trie_node = current_trie_node.children[
-                        next_token_id
-                    ]
-                    if current_trie_node.is_end:
-                        chosen_function = current_trie_node.function_name
-
-                        func_spec = next(
-                            f
-                            for f in self.functions
-                            if f.name == chosen_function
-                        )
-                        current_params_queue = list(
-                            func_spec.parameters.items()
-                        )
-                        is_first_param = True
-
-                        current_step = self.transitions[current_step]
-                        current_step_queue = deque(steps_map[current_step])
-                        current_trie_node = self.fn_name_trie.root
-                case DecodingStep.AI_PARAMS_KEYS:
-                    pass
-                case DecodingStep.AI_PARAMS_VALS:
-                    pass
+            # 4. On informe l'arbitre du choix de l'IA. S'il dit stop, on coupe !
+            is_finished = fsm.advance(next_token_id)
+            if is_finished:
+                break
 
         return {"raw": self.model.decode(generated_tokens)}
