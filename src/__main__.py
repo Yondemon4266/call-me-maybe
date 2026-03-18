@@ -1,6 +1,7 @@
 from llm_sdk import Small_LLM_Model
 import src.parser as parser
 from src.models import FunctionFormat, PromptFormat
+from src.generation.json_types.type_registry import JSONTypeRegistry
 from src.generation.decoder import JsonConstrainedDecoder
 import json
 
@@ -18,10 +19,8 @@ def main() -> None:
     print("Initializing the AI model Qwen/Qwen3-0.6B...")
     ai_model = Small_LLM_Model()
     print(f"AI Model loaded with success on the {ai_model._device}!")
-
+    # print(ai_model.get_path_to_tokenizer_file())
     decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
-    # 3. Lancer la boucle de génération / constrained decoding - EN COURS
-    # 4. Sauvegarder les résultats
     for prompt in prompts:
         decoder.generate_json_in_output_format(prompt)
 

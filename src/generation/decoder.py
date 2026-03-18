@@ -1,9 +1,8 @@
 import json
-
 from llm_sdk import Small_LLM_Model
-from src.generation.decoding_steps import DecodingStep
-from src.generation.state_machine import JsonStateMachine
+from src.generation.state_machine import JsonStateMachine, DecodingStep
 from src.generation.trie import FunctionNameTrie
+from src.generation.json_types.type_registry import JSONTypeRegistry
 from src.models import FunctionFormat, PromptFormat
 
 
@@ -17,31 +16,36 @@ class JsonConstrainedDecoder:
         self.model = model
         self.prompts = prompts
         self.functions = functions
-        self.functions_text = self._init_functions_text()
+        self.vocabulary_file = model.get_path_to_vocab_file()
+
+        # Initialisation des structures globales (Faites UNE seule fois)
+        self.fn_name_trie = FunctionNameTrie(self.model, self.functions)
+        self.type_registry = JSONTypeRegistry(self.vocabulary_file)
+
+        # On construit le contexte complet pour l'IA
         self.context = (
             "You are a helpful assistant. Choose the correct "
             "function from this list and get the needed arguments "
-            "based on the user prompt for it to work:\n\n"
-            f"{self.functions_text}"
+            "based on the user prompt for it to work. "
+            "Keep all extracted parameters "
+            "as short and concise as possible. "
+            "Do not extract full sentences if a short pattern is sufficient."
+            "CRITICAL INSTRUCTIONS FOR REGEX:\n"
+            "- Always use the absolute SHORTEST regex pattern possible (e.g., '\\d+', '[a-z]+').\n"
+            "- NEVER capture full sentences. NEVER repeat capture groups.\n\n"
         )
-        self.vocabulary_file = model.get_path_to_vocab_file()
-        self.fn_name_trie = FunctionNameTrie(self.model, self.functions)
-
-    def _init_functions_text(self) -> str:
-        functions_text = ""
         for func in self.functions:
-            functions_text += f"- Function: {func.name}\n"
-            functions_text += f"  Description: {func.description}\n"
-            functions_text += f"  Parameters: {func.parameters}\n"
-            functions_text += f"  Returns: {func.returns}\n\n"
-        return functions_text
+            self.context += f"- Function: {func.name}\n"
+            self.context += f"  Description: {func.description}\n"
+            self.context += f"  Parameters: {func.parameters}\n"
+            self.context += f"  Returns: {func.returns}\n\n"
 
     def _mask_logits(
-        self, logits: list[float], allowed_ids: list[int]
+        self, logits: list[float], allowed_ids: list[int] | set[int]
     ) -> None:
         if not allowed_ids:
             return
-
+        # Set pour une recherche instantanée (O(1))
         allowed_set = set(allowed_ids)
         for i in range(len(logits)):
             if i not in allowed_set:
@@ -54,51 +58,40 @@ class JsonConstrainedDecoder:
         )
         input_ids: list[int] = self.model.encode(dynamic_context).tolist()[0]
 
-        max_tokens = 200
         generated_tokens = []
 
-        print(f"\n--- [PURISTE] Traitement de : {prompt.prompt} ---")
-
-        # 1. On instancie notre arbitre pour cette génération précise
+        # 1. On lance l'arbitre pour cette génération
         fsm = JsonStateMachine(
             model=self.model,
             prompt_text=prompt.prompt,
             functions=self.functions,
             fn_name_trie=self.fn_name_trie,
+            type_registry=self.type_registry,
         )
 
-        for _ in range(max_tokens):
+        # 2. La boucle principale ultra-épurée
+        while not fsm.is_done():
 
-            # --- LE RACCOURCI : FAST-FORWARDING ---
-            if fsm.current_step == DecodingStep.STEP_PROMPT_VALUE:
-                prompt_tokens = fsm.fast_forward_prompt()
-                input_ids.extend(prompt_tokens)
-                generated_tokens.extend(prompt_tokens)
-                print(prompt.prompt, end="", flush=True)
+            # A. L'arbitre veut-il sauter des étapes (Fast-Forward) ?
+            if fsm.can_fast_forward():
+                ff_tokens = fsm.get_fast_forward_tokens()
+                input_ids.extend(ff_tokens)
+                generated_tokens.extend(ff_tokens)
+                print(self.model.decode(ff_tokens), end="", flush=True)
                 continue
-            # --------------------------------------
 
+            # B. Génération normale de l'IA
             logits = self.model.get_logits_from_input_ids(input_ids)
+            allowed_tokens = fsm.get_allowed_tokens()
 
-            # 2. On demande les règles à l'arbitre
-            allowed_token_ids = fsm.get_allowed_tokens()
-
-            # Sécurité temporaire : on arrête le code ici tant qu'on n'a pas codé la logique des clés !
-            if fsm.current_step == DecodingStep.AI_PARAMS_KEYS:
-                break
-
-            # 3. Masquage et sélection
-            self._mask_logits(logits, allowed_token_ids)
+            self._mask_logits(logits, allowed_tokens)
             next_token_id = logits.index(max(logits))
 
             input_ids.append(next_token_id)
             generated_tokens.append(next_token_id)
-
             print(self.model.decode([next_token_id]), end="", flush=True)
 
-            # 4. On informe l'arbitre du choix de l'IA. S'il dit stop, on coupe !
-            is_finished = fsm.advance(next_token_id)
-            if is_finished:
-                break
+            # C. On notifie l'arbitre du choix
+            fsm.advance(next_token_id)
 
         return {"raw": self.model.decode(generated_tokens)}
