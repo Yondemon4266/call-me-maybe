@@ -37,7 +37,7 @@ class JsonConstrainedDecoder:
             self.context += f"  Parameters: {func.parameters}\n"
             self.context += f"  Returns: {func.returns}\n\n"
 
-    def generate_json_in_output_format(self, prompt: PromptFormat) -> dict:
+    def generate_json_in_output_format(self, prompt: PromptFormat) -> str:
         dynamic_context = (
             self.context + f"User request: '{prompt.prompt}'\n"
             "Now, generate the exact JSON to call the right function.\n\n"
@@ -84,4 +84,4 @@ class JsonConstrainedDecoder:
             # C. On notifie l'arbitre du choix
             fsm.advance(next_token_id)
 
-        return {"raw": self.model.decode(generated_tokens)}
+        return self.model.decode(generated_tokens)

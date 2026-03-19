@@ -105,6 +105,8 @@ class JsonStateMachine:
 
             if self.current_param_type == "string":
                 allowed.add(self.type_registry.quote_token)
+                allowed.add(self.type_registry.quote_brace_token)
+                allowed.add(self.type_registry.quote_comma_token)
             else:
                 if self.remaining_params:
                     allowed.add(self.type_registry.comma_token)

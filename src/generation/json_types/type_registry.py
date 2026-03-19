@@ -18,6 +18,8 @@ class JSONTypeRegistry:
         self.opening_brace_token = self.vocab.get("{")
         self.colon_token = self.vocab.get(":")
         self.quote_token = self.vocab.get('"')
+        self.quote_comma_token = self.vocab.get('",')
+        self.quote_brace_token = self.vocab.get('"}')
 
     def get_allowed_tokens_for_type(self, json_type: str) -> set[int]:
         match json_type:
