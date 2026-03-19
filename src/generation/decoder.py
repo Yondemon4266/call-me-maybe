@@ -1,9 +1,9 @@
-import json
 from llm_sdk import Small_LLM_Model
-from src.generation.state_machine import JsonStateMachine, DecodingStep
+from src.generation.state_machine import JsonStateMachine
 from src.generation.trie import FunctionNameTrie
 from src.generation.json_types.type_registry import JSONTypeRegistry
 from src.models import FunctionFormat, PromptFormat
+import numpy as np
 
 
 class JsonConstrainedDecoder:
@@ -30,26 +30,12 @@ class JsonConstrainedDecoder:
             "Keep all extracted parameters "
             "as short and concise as possible. "
             "Do not extract full sentences if a short pattern is sufficient."
-            "CRITICAL INSTRUCTIONS FOR REGEX:\n"
-            "- Always use the absolute SHORTEST regex pattern possible (e.g., '\\d+', '[a-z]+').\n"
-            "- NEVER capture full sentences. NEVER repeat capture groups.\n\n"
         )
         for func in self.functions:
             self.context += f"- Function: {func.name}\n"
             self.context += f"  Description: {func.description}\n"
             self.context += f"  Parameters: {func.parameters}\n"
             self.context += f"  Returns: {func.returns}\n\n"
-
-    def _mask_logits(
-        self, logits: list[float], allowed_ids: list[int] | set[int]
-    ) -> None:
-        if not allowed_ids:
-            return
-        # Set pour une recherche instantanée (O(1))
-        allowed_set = set(allowed_ids)
-        for i in range(len(logits)):
-            if i not in allowed_set:
-                logits[i] = -float("inf")
 
     def generate_json_in_output_format(self, prompt: PromptFormat) -> dict:
         dynamic_context = (
@@ -84,9 +70,13 @@ class JsonConstrainedDecoder:
             logits = self.model.get_logits_from_input_ids(input_ids)
             allowed_tokens = fsm.get_allowed_tokens()
 
-            self._mask_logits(logits, allowed_tokens)
-            next_token_id = logits.index(max(logits))
+            logits_array = np.array(logits)
+            if allowed_tokens:
+                mask = np.ones(len(logits_array), dtype=bool)
+                mask[list(allowed_tokens)] = False
+                logits_array[mask] = -np.inf
 
+            next_token_id = int(np.argmax(logits_array))
             input_ids.append(next_token_id)
             generated_tokens.append(next_token_id)
             print(self.model.decode([next_token_id]), end="", flush=True)
