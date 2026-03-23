@@ -7,7 +7,8 @@ class JSONBool:
 
     def _build_preset(self, vocab: dict[str, int]) -> set[int]:
         valid_ids: set[int] = set()
-        pattern = re.compile(r"^[\sĠ]*(true|false)$", re.IGNORECASE)
+        pattern = re.compile(r"^(true|false)$")
+
         termination_chars = [",", "}", "\n", ",\n", "}\n"]
 
         for token_str, token_id in vocab.items():

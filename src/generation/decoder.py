@@ -22,23 +22,16 @@ class JsonConstrainedDecoder:
         self.type_registry = JSONTypeRegistry(self.model, self.vocabulary_file)
 
         self.context = (
-            "You are a helpful assistant. Choose the correct "
-            "function from this list and get the needed arguments "
-            "based on the user prompt for it to work. "
-            "Keep all extracted parameters "
-            "as short and concise as possible. "
-            "Do not extract full sentences if a short pattern is sufficient."
+            "SYSTEM: Extract arguments as a JSON tool.\n"
+            "RULES: No chat. No math. Exact extraction only.\n"
+            "FUNCTIONS:\n"
         )
         for func in self.functions:
-            self.context += f"- Function: {func.name}\n"
-            self.context += f"  Description: {func.description}\n"
-            self.context += f"  Parameters: {func.parameters}\n"
-            self.context += f"  Returns: {func.returns}\n\n"
+            self.context += f"- {func.name}({func.parameters})\n"
 
     def generate_one_prompt_in_json(self, prompt: PromptFormat) -> list[int]:
         dynamic_context = (
-            self.context + f"User request: '{prompt.prompt}'\n"
-            "Now, generate the exact JSON to call the right function.\n\n"
+            self.context + f"INPUT: '{prompt.prompt}'\n" "JSON_OUTPUT:\n"
         )
         input_ids: list[int] = self.model.encode(dynamic_context).tolist()[0]
 

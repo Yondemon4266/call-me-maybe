@@ -7,7 +7,7 @@ class JSONInteger:
 
     def _build_preset(self, vocab: dict[str, int]) -> set[int]:
         valid_ids: set[int] = set()
-        pattern = re.compile(r"^[\sĠ]*[-0-9]+$")
+        pattern = re.compile(r"^[0-9]+$")
         termination_chars = [",", "}", "\n", ",\n", "}\n"]
 
         for token_str, token_id in vocab.items():

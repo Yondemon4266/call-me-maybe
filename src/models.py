@@ -14,9 +14,7 @@ class PromptFormat(BaseModel):
 
 
 class TypeInfo(BaseModel):
-    type: Literal[
-        "string", "number", "boolean", "integer", "array", "object", "null"
-    ]
+    type: Literal["string", "number", "boolean", "integer"]
 
 
 class FunctionFormat(BaseModel):

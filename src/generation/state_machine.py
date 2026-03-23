@@ -36,6 +36,7 @@ class JsonStateMachine:
         self.function_params = []
         self.current_param_type: str | None = None
         self.is_first_param = True
+        self.param_token_count = 0
 
     def can_fast_forward(self):
         if self.current_step in [
@@ -76,6 +77,7 @@ class JsonStateMachine:
                 self.is_first_param = False
                 quote = '"' if self.current_param_type == "string" else ""
                 self.current_step = DecodingSteps.VALUE_PARAMS
+                self.param_token_count = 0
                 return self.model.encode(
                     f'{prefix}"{param_name}": {quote}'
                 ).tolist()[0]
@@ -94,6 +96,31 @@ class JsonStateMachine:
                         self.current_param_type
                     )
                 )
+
+                is_looping_number = (
+                    self.current_param_type == "number"
+                    or self.current_param_type == "integer"
+                    and self.param_token_count >= 15
+                )
+
+                is_too_long_string = self.param_token_count >= 100
+
+                if is_looping_number or is_too_long_string:
+                    if self.current_param_type == "string":
+                        allowed_tokens = {
+                            t
+                            for t in allowed_tokens
+                            if '"' in self.model.decode([t])
+                        }
+                    else:
+                        allowed_tokens = {
+                            t
+                            for t in allowed_tokens
+                            if any(
+                                c in self.model.decode([t])
+                                for c in [",", "\n", "}"]
+                            )
+                        }
                 tokens_to_remove = set()
 
                 for t_id in allowed_tokens:
@@ -108,6 +135,17 @@ class JsonStateMachine:
                             and not token_str.lstrip().startswith('"')
                         ):
                             tokens_to_remove.add(t_id)
+                    if self.current_param_type in ["number", "integer"]:
+                        has_term_char = any(
+                            c in token_str for c in [",", "\n", "}"]
+                        )
+
+                        if has_term_char:
+                            if any(c.isdigit() for c in token_str):
+                                tokens_to_remove.add(t_id)
+
+                            if self.param_token_count == 0:
+                                tokens_to_remove.add(t_id)
                 return list(allowed_tokens - tokens_to_remove)
 
             case _:
@@ -132,6 +170,7 @@ class JsonStateMachine:
             case DecodingSteps.VALUE_PARAMS:
                 token_str = self.model.decode([next_token_id])
 
+                self.param_token_count += 1
                 if self.current_param_type == "string":
                     if '"' in token_str:
                         self.current_step = DecodingSteps.KEY_PARAMS
