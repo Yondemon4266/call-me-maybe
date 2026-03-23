@@ -18,11 +18,9 @@ class JsonConstrainedDecoder:
         self.functions = functions
         self.vocabulary_file = model.get_path_to_vocab_file()
 
-        # Initialisation des structures globales (Faites UNE seule fois)
         self.fn_name_trie = FunctionNameTrie(self.model, self.functions)
-        self.type_registry = JSONTypeRegistry(self.vocabulary_file)
+        self.type_registry = JSONTypeRegistry(self.model, self.vocabulary_file)
 
-        # On construit le contexte complet pour l'IA
         self.context = (
             "You are a helpful assistant. Choose the correct "
             "function from this list and get the needed arguments "
@@ -37,16 +35,15 @@ class JsonConstrainedDecoder:
             self.context += f"  Parameters: {func.parameters}\n"
             self.context += f"  Returns: {func.returns}\n\n"
 
-    def generate_json_in_output_format(self, prompt: PromptFormat) -> str:
+    def generate_one_prompt_in_json(self, prompt: PromptFormat) -> list[int]:
         dynamic_context = (
             self.context + f"User request: '{prompt.prompt}'\n"
             "Now, generate the exact JSON to call the right function.\n\n"
         )
         input_ids: list[int] = self.model.encode(dynamic_context).tolist()[0]
 
-        generated_tokens = []
+        generated_tokens: list[int] = []
 
-        # 1. On lance l'arbitre pour cette génération
         fsm = JsonStateMachine(
             model=self.model,
             prompt_text=prompt.prompt,
@@ -55,33 +52,39 @@ class JsonConstrainedDecoder:
             type_registry=self.type_registry,
         )
 
-        # 2. La boucle principale ultra-épurée
         while not fsm.is_done():
-
-            # A. L'arbitre veut-il sauter des étapes (Fast-Forward) ?
             if fsm.can_fast_forward():
-                ff_tokens = fsm.get_fast_forward_tokens()
+                ff_tokens = fsm.get_ff_tokens()
                 input_ids.extend(ff_tokens)
                 generated_tokens.extend(ff_tokens)
                 print(self.model.decode(ff_tokens), end="", flush=True)
                 continue
 
-            # B. Génération normale de l'IA
             logits = self.model.get_logits_from_input_ids(input_ids)
-            allowed_tokens = fsm.get_allowed_tokens()
+            allowed_tokens: list[int] = fsm.get_allowed_tokens()
 
             logits_array = np.array(logits)
             if allowed_tokens:
                 mask = np.ones(len(logits_array), dtype=bool)
-                mask[list(allowed_tokens)] = False
+                mask[allowed_tokens] = False
                 logits_array[mask] = -np.inf
 
             next_token_id = int(np.argmax(logits_array))
-            input_ids.append(next_token_id)
-            generated_tokens.append(next_token_id)
-            print(self.model.decode([next_token_id]), end="", flush=True)
+            keep_token = fsm.advance(next_token_id)
+            if keep_token:
+                input_ids.append(next_token_id)
+                generated_tokens.append(next_token_id)
+                print(self.model.decode([next_token_id]), end="", flush=True)
 
-            # C. On notifie l'arbitre du choix
-            fsm.advance(next_token_id)
+        return generated_tokens
 
-        return self.model.decode(generated_tokens)
+    def generate_all_prompts_in_json(self):
+        all_generated_tokens: list[int] = [
+            self.type_registry.open_bracket_token
+        ]
+        for prompt in self.prompts:
+            all_generated_tokens.extend(
+                self.generate_one_prompt_in_json(prompt)
+            )
+            all_generated_tokens.append(self.type_registry.comma_token)
+        all_generated_tokens.append(self.type_registry.close_bracket_token)

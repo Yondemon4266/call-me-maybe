@@ -2,6 +2,7 @@ import argparse
 from src.models import ProjectArgs
 from pathlib import Path
 from pydantic import ValidationError
+import sys
 
 
 def parse_args() -> ProjectArgs:
@@ -34,8 +35,8 @@ def parse_args() -> ProjectArgs:
         args = ProjectArgs(**vars(raw_args))
         return args
 
-    # check if input files exist
     except ValidationError as e:
-        print(e)
+        sys.stderr.write(
+            f"{e.errors()[0]['msg']} \nInput was: {e.errors()[0]['input']}"
+        )
         exit(1)
-        # sys.stderr.write("error pydantic")

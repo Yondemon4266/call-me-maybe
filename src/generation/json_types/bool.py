@@ -6,11 +6,15 @@ class JSONBool:
         self.preset_tokens = self._build_preset(vocab)
 
     def _build_preset(self, vocab: dict[str, int]) -> set[int]:
-        valid_ids = set()
+        valid_ids: set[int] = set()
         pattern = re.compile(r"^[\sĠ]*(true|false)$", re.IGNORECASE)
+        termination_chars = [",", "}", "\n", ",\n", "}\n"]
 
         for token_str, token_id in vocab.items():
-            if pattern.match(token_str):
+            if (
+                pattern.match(token_str)
+                or token_str.strip() in termination_chars
+            ):
                 valid_ids.add(token_id)
 
         return valid_ids
