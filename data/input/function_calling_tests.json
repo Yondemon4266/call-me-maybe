@@ -1,20 +1,35 @@
 [
   {
-    "prompt": "Set my age to twenty-five and a half years old."
+    "prompt": "What is the sum of 2 and 3?"
   },
   {
-    "prompt": "Change age to: I don't know, maybe 30?"
+    "prompt": "What is the sum of 265 and 345?"
   },
   {
-    "prompt": "Send an email to Alice."
+    "prompt": "Greet shrek"
   },
   {
-    "prompt": "Email bob@test.com. Tell him that the meeting is cancelled."
+    "prompt": "Greet john"
   },
   {
-    "prompt": "Please configure the server at db.backend.local with port 5432, SSL enabled, and a timeout of 120.5 seconds."
+    "prompt": "Reverse the string 'hello'"
   },
   {
-    "prompt": "Configure the server. Host is unknown, port is nine thousand, no ssl, timeout is minus forty-two."
+    "prompt": "Reverse the string 'world'"
+  },
+  {
+    "prompt": "What is the square root of 16?"
+  },
+  {
+    "prompt": "Calculate the square root of 144"
+  },
+  {
+    "prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS"
+  },
+  {
+    "prompt": "Replace all vowels in 'Programming is fun' with asterisks"
+  },
+  {
+    "prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"
   }
 ]

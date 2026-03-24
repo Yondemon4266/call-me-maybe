@@ -24,7 +24,7 @@ class JSONTypeRegistry:
         self.bool_handler = JSONBool(self.model, self.vocab)
         self.int_handler = JSONInteger(self.model, self.vocab)
         self.number_handler = JSONNumber(self.model, self.vocab)
-        self.string_handler = JSONString(self.vocab)
+        self.string_handler = JSONString(self.model, self.vocab)
         self.string_end_tokens = set()
         self.number_end_tokens = set()
         self.token_splits: dict[int, list[int]] = {}

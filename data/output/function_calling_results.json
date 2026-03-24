@@ -1,54 +1,87 @@
 [
   {
-    "prompt": "Set my age to twenty-five and a half years old.",
-    "name": "fn_set_user_age",
+    "prompt": "What is the sum of 2 and 3?",
+    "name": "fn_add_numbers",
     "parameters": {
-      "age": 25
+      "a": 2,
+      "b": 3
     }
   },
   {
-    "prompt": "Change age to: I don't know, maybe 30?",
-    "name": "fn_set_user_age",
+    "prompt": "What is the sum of 265 and 345?",
+    "name": "fn_add_numbers",
     "parameters": {
-      "age": 30
+      "a": 265,
+      "b": 345
     }
   },
   {
-    "prompt": "Send an email to Alice.",
-    "name": "fn_send_email",
+    "prompt": "Greet shrek",
+    "name": "fn_greet",
     "parameters": {
-      "to_address": "Alice",
-      "subject": "Email",
-      "body": "Email"
+      "name": "shrek"
     }
   },
   {
-    "prompt": "Email bob@test.com. Tell him that the meeting is cancelled.",
-    "name": "fn_send_email",
+    "prompt": "Greet john",
+    "name": "fn_greet",
     "parameters": {
-      "to_address": "bob@test.com",
-      "subject": "meeting cancelled",
-      "body": "Tell him that the meeting is cancelled."
+      "name": "john"
     }
   },
   {
-    "prompt": "Please configure the server at db.backend.local with port 5432, SSL enabled, and a timeout of 120.5 seconds.",
-    "name": "fn_configure_server",
+    "prompt": "Reverse the string 'hello'",
+    "name": "fn_reverse_string",
     "parameters": {
-      "host": "db.backend.local",
-      "port": 5432,
-      "use_ssl": true,
-      "timeout": 120.5
+      "s": "hello"
     }
   },
   {
-    "prompt": "Configure the server. Host is unknown, port is nine thousand, no ssl, timeout is minus forty-two.",
-    "name": "fn_configure_server",
+    "prompt": "Reverse the string 'world'",
+    "name": "fn_reverse_string",
     "parameters": {
-      "host": "unknown",
-      "port": 9000,
-      "use_ssl": false,
-      "timeout": -42
+      "s": "world"
+    }
+  },
+  {
+    "prompt": "What is the square root of 16?",
+    "name": "fn_get_square_root",
+    "parameters": {
+      "a": 16
+    }
+  },
+  {
+    "prompt": "Calculate the square root of 144",
+    "name": "fn_get_square_root",
+    "parameters": {
+      "a": 144
+    }
+  },
+  {
+    "prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "Hello 34 I'm 233 years old",
+      "regex": "\\d+",
+      "replacement": "NUMBERS"
+    }
+  },
+  {
+    "prompt": "Replace all vowels in 'Programming is fun' with asterisks",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "Programming is fun",
+      "regex": "[aeiouAEIOU]",
+      "replacement": "*"
+    }
+  },
+  {
+    "prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "The cat sat on the mat with another cat",
+      "regex": "cat",
+      "replacement": "dog"
     }
   }
 ]
