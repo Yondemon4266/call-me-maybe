@@ -1,71 +1,53 @@
 [
   {
-    "name": "fn_substract_numbers",
-    "description": "Substract two numbers together and return the result.",
+    "name": "fn_set_user_age",
+    "description": "Sets the user's age.",
     "parameters": {
-      "a": {
-        "type": "number"
-      },
-      "b": {
-        "type": "number"
+      "age": {
+        "type": "integer"
       }
     },
     "returns": {
-      "type": "number"
+      "type": "boolean"
     }
   },
   {
-    "name": "fn_greet",
-    "description": "Generate a greeting message for a person by name.",
+    "name": "fn_send_email",
+    "description": "Sends an email to a recipient.",
     "parameters": {
-      "name": {
-        "type": "string"
-      }
-    },
-    "returns": {
-      "type": "string"
-    }
-  },
-  {
-    "name": "fn_reverse_string",
-    "description": "Reverse a string and return the reversed result.",
-    "parameters": {
-      "s": {
-        "type": "string"
-      }
-    },
-    "returns": {
-      "type": "string"
-    }
-  },
-  {
-    "name": "fn_get_square_root",
-    "description": "Calculate the square root of a number.",
-    "parameters": {
-      "a": {
-        "type": "number"
-      }
-    },
-    "returns": {
-      "type": "number"
-    }
-  },
-  {
-    "name": "fn_substitute_string_with_regex",
-    "description": "Replace all occurrences matching a regex pattern in a string.",
-    "parameters": {
-      "source_string": {
+      "to_address": {
         "type": "string"
       },
-      "regex": {
+      "subject": {
         "type": "string"
       },
-      "replacement": {
+      "body": {
         "type": "string"
       }
     },
     "returns": {
-      "type": "string"
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_configure_server",
+    "description": "Configures a server connection.",
+    "parameters": {
+      "host": {
+        "type": "string"
+      },
+      "port": {
+        "type": "integer"
+      },
+      "use_ssl": {
+        "type": "boolean"
+      },
+      "timeout": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "boolean"
     }
   }
 ]

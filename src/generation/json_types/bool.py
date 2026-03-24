@@ -10,7 +10,7 @@ class JSONBool:
         self, model: Small_LLM_Model, vocab: dict[str, int]
     ) -> set[int]:
         valid_ids: set[int] = set()
-        pattern = re.compile(r"^(true|false)$", re.IGNORECASE)
+        pattern = re.compile(r"^\s*(true|false)$")
 
         for token_id in vocab.values():
             token_str = model.decode([token_id])

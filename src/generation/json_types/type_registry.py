@@ -44,23 +44,23 @@ class JSONTypeRegistry:
                 return set()
 
     def _build_end_rules(self) -> None:
+        num_pattern = re.compile(r"^\s*-?[0-9]*\.?[0-9]*$")
+        
         for token_str, token_id in self.vocab.items():
             token_str = self.model.decode([token_id])
             match = re.search(r"[,}\n]", token_str)
             match_quote = re.search(r'(?<!\\)"', token_str)
+            
             if match_quote:
                 self.string_end_tokens.add(token_id)
                 text_before = token_str[: match_quote.start()]
                 self.token_splits[token_id] = (
-                    self.model.encode(text_before).tolist()[0]
-                    if text_before
-                    else []
+                    self.model.encode(text_before).tolist()[0] if text_before else []
                 )
             elif match:
-                self.number_end_tokens.add(token_id)
                 text_before = token_str[: match.start()]
-                self.token_splits[token_id] = (
-                    self.model.encode(text_before).tolist()[0]
-                    if text_before
-                    else []
-                )
+                if not text_before or num_pattern.fullmatch(text_before):
+                    self.number_end_tokens.add(token_id)
+                    self.token_splits[token_id] = (
+                        self.model.encode(text_before).tolist()[0] if text_before else []
+                    )

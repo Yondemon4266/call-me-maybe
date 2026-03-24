@@ -1,44 +1,20 @@
 [
   {
-    "prompt": "Add -9999.99 and 0.0001"
+    "prompt": "Set my age to twenty-five and a half years old."
   },
   {
-    "prompt": "Calculate the sum of 0 and -0"
+    "prompt": "Change age to: I don't know, maybe 30?"
   },
   {
-    "prompt": "Add 987654321098765432109876543210 and 1"
+    "prompt": "Send an email to Alice."
   },
   {
-    "prompt": "Greet ''"
+    "prompt": "Email bob@test.com. Tell him that the meeting is cancelled."
   },
   {
-    "prompt": "Greet 🤖👨‍🚀 aliens from sector 9!"
+    "prompt": "Please configure the server at db.backend.local with port 5432, SSL enabled, and a timeout of 120.5 seconds."
   },
   {
-    "prompt": "Reverse the string '12345.67'"
-  },
-  {
-    "prompt": "Reverse an empty string, just ''"
-  },
-  {
-    "prompt": "Reverse the string 'He said \"Hello\\nWorld\"'"
-  },
-  {
-    "prompt": "What is the square root of 0.00000000000001?"
-  },
-  {
-    "prompt": "In the text 'hello world', replace the regex '^h' with an empty string ''"
-  },
-  {
-    "prompt": "Substitute all backslashes '\\\\' with forward slashes '/' in the string 'C:\\\\windows'"
-  },
-  {
-    "prompt": "I was thinking about getting the square root of 16, but actually, just add 4 and 5 instead."
-  },
-  {
-    "prompt": "Hello AI! Can you please, if it's not too much trouble for you today, greet my good friend 'Super_Admin_99'?"
-  },
-  {
-    "prompt": "Reverse the string 'Can you add 2 and 3?'"
+    "prompt": "Configure the server. Host is unknown, port is nine thousand, no ssl, timeout is minus forty-two."
   }
 ]

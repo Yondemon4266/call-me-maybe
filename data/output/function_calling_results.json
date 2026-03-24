@@ -1,108 +1,54 @@
 [
   {
-    "prompt": "Add -9999.99 and 0.0001",
-    "name": "fn_add_numbers",
+    "prompt": "Set my age to twenty-five and a half years old.",
+    "name": "fn_set_user_age",
     "parameters": {
-      "a": 9999.99,
-      "b": 0.0001
+      "age": 25
     }
   },
   {
-    "prompt": "Calculate the sum of 0 and -0",
-    "name": "fn_add_numbers",
+    "prompt": "Change age to: I don't know, maybe 30?",
+    "name": "fn_set_user_age",
     "parameters": {
-      "a": 0,
-      "b": 0
+      "age": 30
     }
   },
   {
-    "prompt": "Add 987654321098765432109876543210 and 1",
-    "name": "fn_add_numbers",
+    "prompt": "Send an email to Alice.",
+    "name": "fn_send_email",
     "parameters": {
-      "a": 987654321098765432109876543210,
-      "b": 1
+      "to_address": "Alice",
+      "subject": "Email",
+      "body": "Email"
     }
   },
   {
-    "prompt": "Greet ''",
-    "name": "fn_greet",
+    "prompt": "Email bob@test.com. Tell him that the meeting is cancelled.",
+    "name": "fn_send_email",
     "parameters": {
-      "name": "name"
+      "to_address": "bob@test.com",
+      "subject": "meeting cancelled",
+      "body": "Tell him that the meeting is cancelled."
     }
   },
   {
-    "prompt": "Greet 🤖👨‍🚀 aliens from sector 9!",
-    "name": "fn_greet",
+    "prompt": "Please configure the server at db.backend.local with port 5432, SSL enabled, and a timeout of 120.5 seconds.",
+    "name": "fn_configure_server",
     "parameters": {
-      "name": "aliens"
+      "host": "db.backend.local",
+      "port": 5432,
+      "use_ssl": true,
+      "timeout": 120.5
     }
   },
   {
-    "prompt": "Reverse the string '12345.67'",
-    "name": "fn_reverse_string",
+    "prompt": "Configure the server. Host is unknown, port is nine thousand, no ssl, timeout is minus forty-two.",
+    "name": "fn_configure_server",
     "parameters": {
-      "s": "12345.67"
-    }
-  },
-  {
-    "prompt": "Reverse an empty string, just ''",
-    "name": "fn_reverse_string",
-    "parameters": {
-      "s": "string"
-    }
-  },
-  {
-    "prompt": "Reverse the string 'He said \"Hello\\nWorld\"'",
-    "name": "fn_reverse_string",
-    "parameters": {
-      "s": "He said \"Hello\\nWorld\""
-    }
-  },
-  {
-    "prompt": "What is the square root of 0.00000000000001?",
-    "name": "fn_get_square_root",
-    "parameters": {
-      "a": 1e-14
-    }
-  },
-  {
-    "prompt": "In the text 'hello world', replace the regex '^h' with an empty string ''",
-    "name": "fn_substitute_string_with_regex",
-    "parameters": {
-      "source_string": "hello world",
-      "regex": "^\\w+$",
-      "replacement": "empty string"
-    }
-  },
-  {
-    "prompt": "Substitute all backslashes '\\\\' with forward slashes '/' in the string 'C:\\\\windows'",
-    "name": "fn_substitute_string_with_regex",
-    "parameters": {
-      "source_string": "C:\\windows",
-      "regex": "\\\\",
-      "replacement": "/"
-    }
-  },
-  {
-    "prompt": "I was thinking about getting the square root of 16, but actually, just add 4 and 5 instead.",
-    "name": "fn_add_numbers",
-    "parameters": {
-      "a": 4,
-      "b": 5
-    }
-  },
-  {
-    "prompt": "Hello AI! Can you please, if it's not too much trouble for you today, greet my good friend 'Super_Admin_99'?",
-    "name": "fn_greet",
-    "parameters": {
-      "name": "Super_Admin_99"
-    }
-  },
-  {
-    "prompt": "Reverse the string 'Can you add 2 and 3?'",
-    "name": "fn_reverse_string",
-    "parameters": {
-      "s": "Can you add 2 and 3?"
+      "host": "unknown",
+      "port": 9000,
+      "use_ssl": false,
+      "timeout": -42
     }
   }
 ]

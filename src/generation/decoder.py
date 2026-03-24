@@ -65,7 +65,8 @@ class JsonConstrainedDecoder:
                 mask = np.ones(len(logits_array), dtype=bool)
                 mask[allowed_tokens] = False
                 logits_array[mask] = -np.inf
-
+            # top_3 = np.argsort(logits_array)[-3:][::-1]
+            # print("[DEBUG] Top 3 envies : " + " | ".join(f"{repr(self.model.decode([t]))} ({logits_array[t]:.2f})" for t in top_3 if logits_array[t] != -np.inf))
             next_token_id = int(np.argmax(logits_array))
             tokens_to_keep = fsm.advance(next_token_id)
             if tokens_to_keep:

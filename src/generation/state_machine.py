@@ -79,7 +79,7 @@ class JsonStateMachine:
                 self.current_step = DecodingSteps.VALUE_PARAMS
                 self.param_token_count = 0
                 return self.model.encode(
-                    f'{prefix}"{param_name}": {quote}'
+                    f'{prefix}"{param_name}":{quote}'
                 ).tolist()[0]
             case _:
                 return []
