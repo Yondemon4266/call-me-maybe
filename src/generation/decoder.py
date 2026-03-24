@@ -4,6 +4,9 @@ from src.generation.trie import FunctionNameTrie
 from src.generation.json_types.type_registry import JSONTypeRegistry
 from src.models import FunctionFormat, PromptFormat
 import numpy as np
+import re
+import json
+import sys
 
 
 class JsonConstrainedDecoder:
@@ -24,6 +27,7 @@ class JsonConstrainedDecoder:
         self.context = (
             "SYSTEM: Extract arguments as a JSON tool.\n"
             "RULES: No chat. No math. Exact extraction only.\n"
+            "Always preserve negative signs (e.g., -9999, -0).\n"
             "FUNCTIONS:\n"
         )
         for func in self.functions:
@@ -63,21 +67,37 @@ class JsonConstrainedDecoder:
                 logits_array[mask] = -np.inf
 
             next_token_id = int(np.argmax(logits_array))
-            keep_token = fsm.advance(next_token_id)
-            if keep_token:
-                input_ids.append(next_token_id)
-                generated_tokens.append(next_token_id)
-                print(self.model.decode([next_token_id]), end="", flush=True)
+            tokens_to_keep = fsm.advance(next_token_id)
+            if tokens_to_keep:
+                input_ids.extend(tokens_to_keep)
+                generated_tokens.extend(tokens_to_keep)
+                print(self.model.decode(tokens_to_keep), end="", flush=True)
 
         return generated_tokens
 
-    def generate_all_prompts_in_json(self):
-        all_generated_tokens: list[int] = [
-            self.type_registry.open_bracket_token
-        ]
+    def generate_all_prompts_in_json(self) -> str:
+        prompts_list = []
+
         for prompt in self.prompts:
-            all_generated_tokens.extend(
-                self.generate_one_prompt_in_json(prompt)
+            prompt_tokens = self.generate_one_prompt_in_json(prompt)
+            prompt_str = self.model.decode(prompt_tokens)
+            cleaned_str = re.sub(
+                r'(?<!\\)\\(?!["\\/bfnrtu])', r"\\\\", prompt_str
             )
-            all_generated_tokens.append(self.type_registry.comma_token)
-        all_generated_tokens.append(self.type_registry.close_bracket_token)
+            try:
+                data = json.loads(cleaned_str)
+                prompts_list.append(data)
+            except json.JSONDecodeError as e:
+                sys.stderr.write(
+                    f"Error: {prompt.prompt} does not contain valid JSON."
+                    f"\nDetails: {e.msg} at line: {e.lineno}, col: {e.colno}",
+                )
+                continue
+            except Exception as e:
+                sys.stderr.write(
+                    "\n[Erreur critique] Échec lors du traitement de "
+                    f"'{prompt.prompt}'.\n"
+                    f"Détails: {str(e)}\n"
+                )
+                continue
+        return json.dumps(prompts_list, indent=2, ensure_ascii=False)

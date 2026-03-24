@@ -1,21 +1,20 @@
 import re
+from llm_sdk import Small_LLM_Model
 
 
 class JSONBool:
-    def __init__(self, vocab: dict[str, int]):
-        self.preset_tokens = self._build_preset(vocab)
+    def __init__(self, model: Small_LLM_Model, vocab: dict[str, int]):
+        self.preset_tokens = self._build_preset(model, vocab)
 
-    def _build_preset(self, vocab: dict[str, int]) -> set[int]:
+    def _build_preset(
+        self, model: Small_LLM_Model, vocab: dict[str, int]
+    ) -> set[int]:
         valid_ids: set[int] = set()
-        pattern = re.compile(r"^(true|false)$")
+        pattern = re.compile(r"^(true|false)$", re.IGNORECASE)
 
-        termination_chars = [",", "}", "\n", ",\n", "}\n"]
-
-        for token_str, token_id in vocab.items():
-            if (
-                pattern.match(token_str)
-                or token_str.strip() in termination_chars
-            ):
+        for token_id in vocab.values():
+            token_str = model.decode([token_id])
+            if pattern.fullmatch(token_str):
                 valid_ids.add(token_id)
 
         return valid_ids

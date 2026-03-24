@@ -1,8 +1,19 @@
 from llm_sdk import Small_LLM_Model
 import src.parser as parser
-from src.models import FunctionFormat, PromptFormat
+from src.models import FunctionFormat, PromptFormat, ProjectArgs
 from src.generation.decoder import JsonConstrainedDecoder
-import json
+import os
+
+
+def write_to_output(json_output: str, args: ProjectArgs) -> None:
+    try:
+        output_dir = os.path.dirname(args.output)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        with open(args.output, "w") as f:
+            f.write(json_output)
+    except OSError as e:
+        print(e)
 
 
 def main() -> None:
@@ -18,7 +29,8 @@ def main() -> None:
 
     print("AI Model loaded with success!")
     decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
-    decoder.generate_all_prompts_in_json()
+    json_output: str = decoder.generate_all_prompts_in_json()
+    write_to_output(json_output, args)
 
 
 if __name__ == "__main__":

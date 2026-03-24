@@ -1,35 +1,44 @@
 [
   {
-    "prompt": "What is the sum of 2 and 3?"
+    "prompt": "Add -9999.99 and 0.0001"
   },
   {
-    "prompt": "What is the sum of 265 and 345?"
+    "prompt": "Calculate the sum of 0 and -0"
   },
   {
-    "prompt": "Greet shrek"
+    "prompt": "Add 987654321098765432109876543210 and 1"
   },
   {
-    "prompt": "Greet john"
+    "prompt": "Greet ''"
   },
   {
-    "prompt": "Reverse the string 'hello'"
+    "prompt": "Greet 🤖👨‍🚀 aliens from sector 9!"
   },
   {
-    "prompt": "Reverse the string 'world'"
+    "prompt": "Reverse the string '12345.67'"
   },
   {
-    "prompt": "What is the square root of 16?"
+    "prompt": "Reverse an empty string, just ''"
   },
   {
-    "prompt": "Calculate the square root of 144"
+    "prompt": "Reverse the string 'He said \"Hello\\nWorld\"'"
   },
   {
-    "prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS"
+    "prompt": "What is the square root of 0.00000000000001?"
   },
   {
-    "prompt": "Replace all vowels in 'Programming is fun' with asterisks"
+    "prompt": "In the text 'hello world', replace the regex '^h' with an empty string ''"
   },
   {
-    "prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"
+    "prompt": "Substitute all backslashes '\\\\' with forward slashes '/' in the string 'C:\\\\windows'"
+  },
+  {
+    "prompt": "I was thinking about getting the square root of 16, but actually, just add 4 and 5 instead."
+  },
+  {
+    "prompt": "Hello AI! Can you please, if it's not too much trouble for you today, greet my good friend 'Super_Admin_99'?"
+  },
+  {
+    "prompt": "Reverse the string 'Can you add 2 and 3?'"
   }
 ]

@@ -5,6 +5,7 @@ from src.generation.json_types.number import JSONNumber
 from src.generation.json_types.string import JSONString
 import sys
 from llm_sdk import Small_LLM_Model
+import re
 
 
 class JSONTypeRegistry:
@@ -20,13 +21,14 @@ class JSONTypeRegistry:
             sys.exit(1)
 
         self.model = model
-        self.bool_handler = JSONBool(self.vocab)
-        self.int_handler = JSONInteger(self.vocab)
-        self.number_handler = JSONNumber(self.vocab)
+        self.bool_handler = JSONBool(self.model, self.vocab)
+        self.int_handler = JSONInteger(self.model, self.vocab)
+        self.number_handler = JSONNumber(self.model, self.vocab)
         self.string_handler = JSONString(self.vocab)
-        self.open_bracket_token: int = self.model.encode("[").tolist()[0][0]
-        self.close_bracket_token: int = self.model.encode("]").tolist()[0][0]
-        self.comma_token: int = self.model.encode(",").tolist()[0][0]
+        self.string_end_tokens = set()
+        self.number_end_tokens = set()
+        self.token_splits: dict[int, list[int]] = {}
+        self._build_end_rules()
 
     def get_allowed_tokens_for_type(self, json_type: str | None) -> set[int]:
         match json_type:
@@ -40,3 +42,25 @@ class JSONTypeRegistry:
                 return self.string_handler.get_allowed_tokens()
             case _:
                 return set()
+
+    def _build_end_rules(self) -> None:
+        for token_str, token_id in self.vocab.items():
+            token_str = self.model.decode([token_id])
+            match = re.search(r"[,}\n]", token_str)
+            match_quote = re.search(r'(?<!\\)"', token_str)
+            if match_quote:
+                self.string_end_tokens.add(token_id)
+                text_before = token_str[: match_quote.start()]
+                self.token_splits[token_id] = (
+                    self.model.encode(text_before).tolist()[0]
+                    if text_before
+                    else []
+                )
+            elif match:
+                self.number_end_tokens.add(token_id)
+                text_before = token_str[: match.start()]
+                self.token_splits[token_id] = (
+                    self.model.encode(text_before).tolist()[0]
+                    if text_before
+                    else []
+                )

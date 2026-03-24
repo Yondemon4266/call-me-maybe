@@ -1,0 +1,108 @@
+[
+  {
+    "prompt": "Add -9999.99 and 0.0001",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": 9999.99,
+      "b": 0.0001
+    }
+  },
+  {
+    "prompt": "Calculate the sum of 0 and -0",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": 0,
+      "b": 0
+    }
+  },
+  {
+    "prompt": "Add 987654321098765432109876543210 and 1",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": 987654321098765432109876543210,
+      "b": 1
+    }
+  },
+  {
+    "prompt": "Greet ''",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "name"
+    }
+  },
+  {
+    "prompt": "Greet 🤖👨‍🚀 aliens from sector 9!",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "aliens"
+    }
+  },
+  {
+    "prompt": "Reverse the string '12345.67'",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "12345.67"
+    }
+  },
+  {
+    "prompt": "Reverse an empty string, just ''",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "string"
+    }
+  },
+  {
+    "prompt": "Reverse the string 'He said \"Hello\\nWorld\"'",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "He said \"Hello\\nWorld\""
+    }
+  },
+  {
+    "prompt": "What is the square root of 0.00000000000001?",
+    "name": "fn_get_square_root",
+    "parameters": {
+      "a": 1e-14
+    }
+  },
+  {
+    "prompt": "In the text 'hello world', replace the regex '^h' with an empty string ''",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "hello world",
+      "regex": "^\\w+$",
+      "replacement": "empty string"
+    }
+  },
+  {
+    "prompt": "Substitute all backslashes '\\\\' with forward slashes '/' in the string 'C:\\\\windows'",
+    "name": "fn_substitute_string_with_regex",
+    "parameters": {
+      "source_string": "C:\\windows",
+      "regex": "\\\\",
+      "replacement": "/"
+    }
+  },
+  {
+    "prompt": "I was thinking about getting the square root of 16, but actually, just add 4 and 5 instead.",
+    "name": "fn_add_numbers",
+    "parameters": {
+      "a": 4,
+      "b": 5
+    }
+  },
+  {
+    "prompt": "Hello AI! Can you please, if it's not too much trouble for you today, greet my good friend 'Super_Admin_99'?",
+    "name": "fn_greet",
+    "parameters": {
+      "name": "Super_Admin_99"
+    }
+  },
+  {
+    "prompt": "Reverse the string 'Can you add 2 and 3?'",
+    "name": "fn_reverse_string",
+    "parameters": {
+      "s": "Can you add 2 and 3?"
+    }
+  }
+]

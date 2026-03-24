@@ -3,28 +3,41 @@ from pydantic import (
     Field,
     model_validator,
     field_validator,
+    ConfigDict,
 )
-from typing import Literal
+
+from typing import Literal, Any
 
 from pathlib import Path
 
 
 class PromptFormat(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     prompt: str
 
 
 class TypeInfo(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     type: Literal["string", "number", "boolean", "integer"]
 
 
 class FunctionFormat(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str
     description: str
     parameters: dict[str, TypeInfo]
     returns: TypeInfo
 
 
+class FunctionCallOutput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    prompt: str
+    name: str
+    parameters: dict[str, Any]
+
+
 class ProjectArgs(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     functions_definition: Path = Field(...)
     input: Path = Field(...)
     output: Path = Field(...)

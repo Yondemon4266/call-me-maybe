@@ -96,62 +96,16 @@ class JsonStateMachine:
                         self.current_param_type
                     )
                 )
-
-                is_looping_number = (
-                    self.current_param_type == "number"
-                    or self.current_param_type == "integer"
-                    and self.param_token_count >= 15
-                )
-
-                is_too_long_string = self.param_token_count >= 100
-
-                if is_looping_number or is_too_long_string:
-                    if self.current_param_type == "string":
-                        allowed_tokens = {
-                            t
-                            for t in allowed_tokens
-                            if '"' in self.model.decode([t])
-                        }
-                    else:
-                        allowed_tokens = {
-                            t
-                            for t in allowed_tokens
-                            if any(
-                                c in self.model.decode([t])
-                                for c in [",", "\n", "}"]
-                            )
-                        }
-                tokens_to_remove = set()
-
-                for t_id in allowed_tokens:
-                    token_str = self.model.decode([t_id])
-
-                    if self.function_params:
-                        if "}" in token_str:
-                            tokens_to_remove.add(t_id)
-                    if self.current_param_type == "string":
-                        if (
-                            '"' in token_str
-                            and not token_str.lstrip().startswith('"')
-                        ):
-                            tokens_to_remove.add(t_id)
-                    if self.current_param_type in ["number", "integer"]:
-                        has_term_char = any(
-                            c in token_str for c in [",", "\n", "}"]
-                        )
-
-                        if has_term_char:
-                            if any(c.isdigit() for c in token_str):
-                                tokens_to_remove.add(t_id)
-
-                            if self.param_token_count == 0:
-                                tokens_to_remove.add(t_id)
-                return list(allowed_tokens - tokens_to_remove)
+                if self.current_param_type == "string":
+                    allowed_tokens.update(self.type_registry.string_end_tokens)
+                else:
+                    allowed_tokens.update(self.type_registry.number_end_tokens)
+                return list(allowed_tokens)
 
             case _:
                 return []
 
-    def advance(self, next_token_id: int) -> bool:
+    def advance(self, next_token_id: int) -> list[int]:
         match self.current_step:
             case DecodingSteps.GENERATE_NAME:
                 self.current_trie_node = self.current_trie_node.children[
@@ -166,24 +120,30 @@ class JsonStateMachine:
                     )
                     self.function_params = list(func_spec.parameters.items())
                     self.current_step = DecodingSteps.PARAMS_TO_FIRST_KEY
-                return True
-            case DecodingSteps.VALUE_PARAMS:
-                token_str = self.model.decode([next_token_id])
+                return [next_token_id]
 
+            case DecodingSteps.VALUE_PARAMS:
                 self.param_token_count += 1
                 if self.current_param_type == "string":
-                    if '"' in token_str:
+                    if next_token_id in self.type_registry.string_end_tokens:
                         self.current_step = DecodingSteps.KEY_PARAMS
-                        return False
+                        return self.type_registry.token_splits.get(
+                            next_token_id, []
+                        )
+
+                    return [next_token_id]
+
                 else:
-                    if (
-                        "," in token_str
-                        or "\n" in token_str
-                        or "}" in token_str
-                    ):
+                    if next_token_id in self.type_registry.number_end_tokens:
                         self.current_step = DecodingSteps.KEY_PARAMS
-                        return False
-        return True
+                        return self.type_registry.token_splits.get(
+                            next_token_id, []
+                        )
+
+                    return [next_token_id]
+
+            case _:
+                return [next_token_id]
 
     def is_done(self):
         return self.current_step is DecodingSteps.END
