@@ -3,7 +3,7 @@ from src.models import FunctionFormat
 
 
 class TrieNode:
-    def __init__(self):
+    def __init__(self) -> None:
         self.children: dict[int, "TrieNode"] = {}
         self.is_end: bool = False
         self.function_name: str | None = None

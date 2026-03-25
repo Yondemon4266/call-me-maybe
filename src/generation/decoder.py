@@ -96,9 +96,9 @@ class JsonConstrainedDecoder:
                 continue
             except Exception as e:
                 sys.stderr.write(
-                    "\n[Erreur critique] Échec lors du traitement de "
+                    "\nUnexpected error on"
                     f"'{prompt.prompt}'.\n"
-                    f"Détails: {str(e)}\n"
+                    f"Details: {str(e)}\n"
                 )
                 continue
         return json.dumps(prompts_list, indent=2, ensure_ascii=False)
