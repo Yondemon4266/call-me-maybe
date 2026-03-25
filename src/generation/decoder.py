@@ -25,17 +25,19 @@ class JsonConstrainedDecoder:
         self.type_registry = JSONTypeRegistry(self.model, self.vocabulary_file)
 
         self.context = (
-            "SYSTEM: Extract arguments as a JSON tool.\n"
-            "RULES: No chat. No math. Exact extraction only.\n"
-            "Always preserve negative signs (e.g., -9999, -0).\n"
+            "<|im_start|>system\nExtract arguments as a JSON tool.\n"
+            "RULES: No chat. No math. Exact and precise extraction only. "
             "FUNCTIONS:\n"
         )
         for func in self.functions:
             self.context += f"- {func.name}({func.parameters})\n"
+        self.context += "<|im_end|>\n"
 
     def generate_one_prompt_in_json(self, prompt: PromptFormat) -> list[int]:
         dynamic_context = (
-            self.context + f"INPUT: '{prompt.prompt}'\n" "JSON_OUTPUT:\n"
+            self.context
+            + f"<|im_start|>user\n{prompt.prompt}<|im_end|>\n"
+            + "<|im_start|>assistant\n"
         )
         input_ids: list[int] = self.model.encode(dynamic_context).tolist()[0]
 
@@ -65,8 +67,6 @@ class JsonConstrainedDecoder:
                 mask = np.ones(len(logits_array), dtype=bool)
                 mask[allowed_tokens] = False
                 logits_array[mask] = -np.inf
-            # top_3 = np.argsort(logits_array)[-3:][::-1]
-            # print("[DEBUG] Top 3 envies : " + " | ".join(f"{repr(self.model.decode([t]))} ({logits_array[t]:.2f})" for t in top_3 if logits_array[t] != -np.inf))
             next_token_id = int(np.argmax(logits_array))
             tokens_to_keep = fsm.advance(next_token_id)
             if tokens_to_keep:

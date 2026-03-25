@@ -37,6 +37,7 @@ class JsonStateMachine:
         self.current_param_type: str | None = None
         self.is_first_param = True
         self.param_token_count = 0
+        self.current_param_str = ""
 
     def can_fast_forward(self):
         if self.current_step in [
@@ -62,6 +63,8 @@ class JsonStateMachine:
 
             case DecodingSteps.KEY_PARAMS:
                 close_prev = '"' if self.current_param_type == "string" else ""
+                self.current_param_str = ""
+
                 if not self.function_params:
                     self.current_step = DecodingSteps.END
                     return self.model.encode(
@@ -91,13 +94,22 @@ class JsonStateMachine:
                     self.current_trie_node
                 )
             case DecodingSteps.VALUE_PARAMS:
-                allowed_tokens: set[int] = (
+                allowed_tokens: set[int] = set(
                     self.type_registry.get_allowed_tokens_for_type(
                         self.current_param_type
                     )
                 )
                 if self.current_param_type == "string":
                     allowed_tokens.update(self.type_registry.string_end_tokens)
+                elif self.current_param_type == "number":
+                    if "." in self.current_param_str:
+                        allowed_tokens.update(
+                            self.type_registry.number_end_tokens
+                        )
+                    else:
+                        for t in self.type_registry.number_end_tokens:
+                            if "." in self.model.decode([t]):
+                                allowed_tokens.add(t)
                 else:
                     allowed_tokens.update(self.type_registry.number_end_tokens)
                 return list(allowed_tokens)
@@ -124,6 +136,8 @@ class JsonStateMachine:
 
             case DecodingSteps.VALUE_PARAMS:
                 self.param_token_count += 1
+                token_str = self.model.decode([next_token_id])
+                self.current_param_str += token_str
                 if self.current_param_type == "string":
                     if next_token_id in self.type_registry.string_end_tokens:
                         self.current_step = DecodingSteps.KEY_PARAMS
