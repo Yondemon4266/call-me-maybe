@@ -1,6 +1,6 @@
 from src.generation.trie import FunctionNameTrie
 from src.generation.json_types.type_registry import JSONTypeRegistry
-from src.models import FunctionFormat
+from src.models import FunctionFormat, TypeInfo
 from llm_sdk import Small_LLM_Model
 from enum import Enum, auto
 import json
@@ -33,13 +33,13 @@ class JsonStateMachine:
         self.current_step = DecodingSteps.START_TO_NAME
         self.current_trie_node = self.fn_name_trie.root
         self.function_name: str | None = None
-        self.function_params = []
+        self.function_params: list[tuple[str, TypeInfo]] = []
         self.current_param_type: str | None = None
         self.is_first_param = True
         self.param_token_count = 0
         self.current_param_str = ""
 
-    def can_fast_forward(self):
+    def can_fast_forward(self) -> bool:
         if self.current_step in [
             DecodingSteps.START_TO_NAME,
             DecodingSteps.PARAMS_TO_FIRST_KEY,
@@ -53,13 +53,17 @@ class JsonStateMachine:
         match self.current_step:
             case DecodingSteps.START_TO_NAME:
                 self.current_step = DecodingSteps.GENERATE_NAME
-                return self.model.encode(
+                ff_tokens: list[int] = self.model.encode(
                     f'{{\n  "prompt": {self.escaped_prompt},\n  "name": "'
                 ).tolist()[0]
+                return ff_tokens
 
             case DecodingSteps.PARAMS_TO_FIRST_KEY:
                 self.current_step = DecodingSteps.KEY_PARAMS
-                return self.model.encode('",\n  "parameters": {').tolist()[0]
+                ff_tokens = self.model.encode(
+                    '",\n  "parameters": {'
+                ).tolist()[0]
+                return ff_tokens
 
             case DecodingSteps.KEY_PARAMS:
                 close_prev = '"' if self.current_param_type == "string" else ""
@@ -67,9 +71,10 @@ class JsonStateMachine:
 
                 if not self.function_params:
                     self.current_step = DecodingSteps.END
-                    return self.model.encode(
+                    ff_tokens = self.model.encode(
                         f"{close_prev}\n  }}\n}}"
                     ).tolist()[0]
+                    return ff_tokens
                 param_name, param_info = self.function_params.pop(0)
                 self.current_param_type = param_info.type
                 prefix = (
@@ -81,9 +86,10 @@ class JsonStateMachine:
                 quote = '"' if self.current_param_type == "string" else ""
                 self.current_step = DecodingSteps.VALUE_PARAMS
                 self.param_token_count = 0
-                return self.model.encode(
+                ff_tokens = self.model.encode(
                     f'{prefix}"{param_name}":{quote}'
                 ).tolist()[0]
+                return ff_tokens
             case _:
                 return []
 
@@ -159,5 +165,5 @@ class JsonStateMachine:
             case _:
                 return [next_token_id]
 
-    def is_done(self):
+    def is_done(self) -> bool:
         return self.current_step is DecodingSteps.END

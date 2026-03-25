@@ -3,6 +3,7 @@ import src.parser as parser
 from src.models import FunctionFormat, PromptFormat, ProjectArgs
 from src.generation.decoder import JsonConstrainedDecoder
 import os
+import sys
 
 
 def write_to_output(json_output: str, args: ProjectArgs) -> None:
@@ -17,20 +18,32 @@ def write_to_output(json_output: str, args: ProjectArgs) -> None:
 
 
 def main() -> None:
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
 
-    print("Reading the files...")
+        print("Reading the files...")
 
-    prompts = parser.load_and_validate_json(args.input, PromptFormat)
-    functions = parser.load_and_validate_json(
-        args.functions_definition, FunctionFormat
-    )
-    ai_model = Small_LLM_Model()
+        prompts = parser.load_and_validate_json(args.input, PromptFormat)
+        functions = parser.load_and_validate_json(
+            args.functions_definition, FunctionFormat
+        )
+        if not functions:
+            raise ValueError(
+                "There is no function available in "
+                f"{args.functions_definition}"
+            )
+        ai_model = Small_LLM_Model()
 
-    print("AI Model loaded with success!")
-    decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
-    json_output: str = decoder.generate_all_prompts_in_json()
-    write_to_output(json_output, args)
+        print("AI Model loaded with success!")
+        decoder = JsonConstrainedDecoder(ai_model, prompts, functions)
+        json_output: str = decoder.generate_all_prompts_in_json()
+        write_to_output(json_output, args)
+    except ValueError as e:
+        sys.stderr.write(f"ValueError: {e}")
+        sys.exit(1)
+    except Exception as e:
+        sys.stderr.write(f"An unexpected error occurred: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
