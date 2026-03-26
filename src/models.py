@@ -7,9 +7,8 @@ from pydantic import (
     field_validator,
     ConfigDict,
 )
-
+import os
 from typing import Literal, Any
-
 from pathlib import Path
 
 
@@ -56,20 +55,56 @@ class ProjectArgs(BaseModel):
 
     @field_validator("input", "functions_definition")
     @classmethod
-    def check_if_file_exists(cls, value: Path) -> Path:
-        """Validate that an input path exists and is a regular file.
+    def check_input_files(cls, value: Path) -> Path:
+        """Validate that an input path exists, is a file, and is readable.
 
         Args:
             value: Path provided for an input JSON file.
 
         Returns:
-            The same path when it points to an existing file.
+            The same path when it points to an existing and readable file.
 
         Raises:
-            ValueError: If the path does not exist or is not a file.
+            ValueError: If the path does not exist, is not a file, or lacks
+                read permissions.
         """
         if not value.is_file():
-            raise ValueError("File can't be found or path is not a file")
+            raise ValueError(
+                f"File '{value}'" "cannot be found or is not a file"
+            )
+        if not os.access(value, os.R_OK):
+            raise ValueError(
+                "Permission denied:" f" Cannot read the file '{value}'"
+            )
+        return value
+
+    @field_validator("output")
+    @classmethod
+    def check_output_file(cls, value: Path) -> Path:
+        """Validate write permissions for the output file or its parent
+        directory.
+
+        Args:
+            value: Path provided for the output JSON file.
+
+        Returns:
+            The same path when write permissions are confirmed.
+
+        Raises:
+            ValueError: If the output path exists but is not a file, or if
+                write permissions are denied for the file or its
+                parent directory.
+        """
+        if value.exists():
+            if not value.is_file():
+                raise ValueError(
+                    f"Output path '{value}' already exists and is not a file"
+                )
+            if not os.access(value, os.W_OK):
+                raise ValueError(
+                    "Permission denied: "
+                    f"Cannot write to existing file '{value}'"
+                )
         return value
 
     @model_validator(mode="after")
