@@ -1,3 +1,5 @@
+"""Registry for mapping JSON types to allowed tokenizer tokens."""
+
 import json
 from src.generation.json_types.json_types import (
     JSONBool,
@@ -11,7 +13,21 @@ import re
 
 
 class JSONTypeRegistry:
+    """Manage JSON type handlers and token-level end-of-value rules."""
+
     def __init__(self, model: Small_LLM_Model, vocab_path: str):
+        """Load vocabulary and initialize type-specific token filters.
+
+        Args:
+            model: Language model wrapper used for token encode/decode.
+            vocab_path: Filesystem path to the tokenizer vocabulary JSON.
+
+        Returns:
+            None.
+
+        Raises:
+            SystemExit: If the vocabulary file cannot be read.
+        """
         try:
             with open(vocab_path, "r", encoding="utf-8") as f:
                 self.vocab: dict[str, int] = json.load(f)
@@ -33,6 +49,14 @@ class JSONTypeRegistry:
         self._build_end_rules()
 
     def get_allowed_tokens_for_type(self, json_type: str | None) -> set[int]:
+        """Return allowed token IDs for a given JSON scalar type.
+
+        Args:
+            json_type: One of supported scalar JSON types.
+
+        Returns:
+            Set of token IDs accepted for the requested type.
+        """
         match json_type:
             case "boolean":
                 return self.bool_handler.get_allowed_tokens()
@@ -46,6 +70,11 @@ class JSONTypeRegistry:
                 return set()
 
     def _build_end_rules(self) -> None:
+        """Build rules used to end string and numeric JSON values.
+
+        Returns:
+            None.
+        """
         num_pattern = re.compile(r"^\s*-?[0-9]*\.?[0-9]*$")
 
         for token_str, token_id in self.vocab.items():

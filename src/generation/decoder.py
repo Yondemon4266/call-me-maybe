@@ -1,3 +1,5 @@
+"""Constrained decoder that generates valid JSON function calls."""
+
 from llm_sdk import Small_LLM_Model
 from src.generation.state_machine import JsonStateMachine
 from src.generation.trie import FunctionNameTrie
@@ -10,12 +12,24 @@ import sys
 
 
 class JsonConstrainedDecoder:
+    """Decode model outputs under JSON and schema constraints."""
+
     def __init__(
         self,
         model: Small_LLM_Model,
         prompts: list[PromptFormat],
         functions: list[FunctionFormat],
     ) -> None:
+        """Initialize decoder context and constraint helpers.
+
+        Args:
+            model: Language model wrapper used for tokenization and logits.
+            prompts: List of prompts to process.
+            functions: Function specifications available to the decoder.
+
+        Returns:
+            None.
+        """
         self.model = model
         self.prompts = prompts
         self.functions = functions
@@ -34,6 +48,14 @@ class JsonConstrainedDecoder:
         self.context += "<|im_end|>\n"
 
     def generate_one_prompt_in_json(self, prompt: PromptFormat) -> list[int]:
+        """Generate constrained JSON tokens for a single prompt.
+
+        Args:
+            prompt: Prompt payload to transform into one JSON object.
+
+        Returns:
+            List of generated token IDs.
+        """
         dynamic_context = (
             self.context
             + f"<|im_start|>user\n{prompt.prompt}<|im_end|>\n"
@@ -77,6 +99,11 @@ class JsonConstrainedDecoder:
         return generated_tokens
 
     def generate_all_prompts_in_json(self) -> str:
+        """Generate constrained JSON for all prompts and serialize the list.
+
+        Returns:
+            A JSON string containing one generated object per prompt.
+        """
         prompts_list = []
 
         for prompt in self.prompts:

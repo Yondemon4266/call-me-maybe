@@ -1,3 +1,5 @@
+"""Helpers to load JSON files and validate items with Pydantic models."""
+
 from typing import TypeVar, Type
 import json
 from pydantic import (
@@ -12,6 +14,18 @@ T = TypeVar("T", bound=BaseModel)
 
 
 def load_and_validate_json(file_path: Path, model_class: Type[T]) -> list[T]:
+    """Load a JSON list file and validate each item with a model class.
+
+    Args:
+        file_path: Path to the JSON file to read.
+        model_class: Pydantic model class used to validate each list item.
+
+    Returns:
+        A list of validated model instances.
+
+    Raises:
+        SystemExit: If file content is invalid, malformed, or unreadable.
+    """
     try:
         content = file_path.read_text(encoding="utf-8")
         data = json.loads(content)

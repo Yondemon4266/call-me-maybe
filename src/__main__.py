@@ -1,3 +1,5 @@
+"""CLI entrypoint for constrained function-calling generation."""
+
 from llm_sdk import Small_LLM_Model
 import src.parser as parser
 from src.models import FunctionFormat, PromptFormat, ProjectArgs
@@ -7,6 +9,18 @@ import sys
 
 
 def write_to_output(json_output: str, args: ProjectArgs) -> None:
+    """Write generated JSON content to the configured output file.
+
+    Args:
+        json_output: Serialized JSON payload to persist.
+        args: Parsed project arguments containing the output path.
+
+    Returns:
+        None.
+
+    Raises:
+        SystemExit: If an OS-level error occurs while writing the file.
+    """
     try:
         output_dir = os.path.dirname(args.output)
         if output_dir:
@@ -14,10 +28,20 @@ def write_to_output(json_output: str, args: ProjectArgs) -> None:
         with open(args.output, "w") as f:
             f.write(json_output)
     except OSError as e:
-        print(e)
+        sys.stderr.write(str(e))
+        sys.exit(1)
 
 
 def main() -> None:
+    """Run the end-to-end CLI workflow.
+
+    The workflow parses arguments, validates input JSON files, initializes
+    the model and decoder, generates constrained JSON outputs, and writes
+    the results to disk.
+
+    Returns:
+        None.
+    """
     try:
         args = parser.parse_args()
 

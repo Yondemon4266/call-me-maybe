@@ -1,3 +1,5 @@
+"""State machine controlling constrained JSON token generation."""
+
 from src.generation.trie import FunctionNameTrie
 from src.generation.json_types.type_registry import JSONTypeRegistry
 from src.models import FunctionFormat, TypeInfo
@@ -7,6 +9,8 @@ import json
 
 
 class DecodingSteps(Enum):
+    """Enumerate high-level steps of constrained decoding."""
+
     START_TO_NAME = auto()
     GENERATE_NAME = auto()
     PARAMS_TO_FIRST_KEY = auto()
@@ -16,6 +20,8 @@ class DecodingSteps(Enum):
 
 
 class JsonStateMachine:
+    """Track decoding progress and enforce JSON/schema constraints."""
+
     def __init__(
         self,
         model: Small_LLM_Model,
@@ -24,6 +30,18 @@ class JsonStateMachine:
         fn_name_trie: FunctionNameTrie,
         type_registry: JSONTypeRegistry,
     ):
+        """Initialize state machine data for one prompt decoding session.
+
+        Args:
+            model: Language model wrapper.
+            prompt_text: Original user prompt text.
+            functions: Available function specifications.
+            fn_name_trie: Trie restricting valid function-name tokens.
+            type_registry: Registry restricting value token types.
+
+        Returns:
+            None.
+        """
         self.model = model
         self.escaped_prompt = json.dumps(prompt_text)
         self.functions = functions
@@ -40,6 +58,11 @@ class JsonStateMachine:
         self.current_param_str = ""
 
     def can_fast_forward(self) -> bool:
+        """Return whether the current step can be emitted deterministically.
+
+        Returns:
+            True when no model sampling is required for this step.
+        """
         if self.current_step in [
             DecodingSteps.START_TO_NAME,
             DecodingSteps.PARAMS_TO_FIRST_KEY,
@@ -50,6 +73,11 @@ class JsonStateMachine:
         return False
 
     def get_ff_tokens(self) -> list[int]:
+        """Produce deterministic tokens for fast-forwardable states.
+
+        Returns:
+            List of token IDs to append immediately.
+        """
         match self.current_step:
             case DecodingSteps.START_TO_NAME:
                 self.current_step = DecodingSteps.GENERATE_NAME
@@ -94,6 +122,11 @@ class JsonStateMachine:
                 return []
 
     def get_allowed_tokens(self) -> list[int]:
+        """Compute allowed next tokens for the current decoding step.
+
+        Returns:
+            Token IDs accepted by current constraints.
+        """
         match self.current_step:
             case DecodingSteps.GENERATE_NAME:
                 return self.fn_name_trie.get_allowed_tokens(
@@ -124,6 +157,14 @@ class JsonStateMachine:
                 return []
 
     def advance(self, next_token_id: int) -> list[int]:
+        """Advance machine state with a selected next token.
+
+        Args:
+            next_token_id: Token selected by constrained decoding.
+
+        Returns:
+            Tokens that should be appended to the generated sequence.
+        """
         match self.current_step:
             case DecodingSteps.GENERATE_NAME:
                 self.current_trie_node = self.current_trie_node.children[
@@ -166,4 +207,9 @@ class JsonStateMachine:
                 return [next_token_id]
 
     def is_done(self) -> bool:
+        """Check whether decoding reached the terminal state.
+
+        Returns:
+            True when no additional decoding steps are required.
+        """
         return self.current_step is DecodingSteps.END

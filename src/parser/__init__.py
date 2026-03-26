@@ -1,3 +1,5 @@
+"""Public parser interfaces for argument and JSON validation helpers."""
+
 from src.parser.parser_args import parse_args
 from src.parser.validate_json import load_and_validate_json
 

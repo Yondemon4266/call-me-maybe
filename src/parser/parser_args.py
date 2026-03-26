@@ -1,3 +1,5 @@
+"""CLI argument parsing and validation entrypoints."""
+
 import argparse
 from src.models import ProjectArgs
 from pathlib import Path
@@ -6,7 +8,14 @@ import sys
 
 
 def parse_args() -> ProjectArgs:
-    """Parse command line arguments"""
+    """Parse CLI arguments and validate them with `ProjectArgs`.
+
+    Returns:
+        A validated `ProjectArgs` instance.
+
+    Raises:
+        SystemExit: If argument validation fails.
+    """
     parser = argparse.ArgumentParser(
         description="Function calling tool with the AI model Qwen3-0.6B"
     )
